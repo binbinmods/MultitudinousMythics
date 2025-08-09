@@ -1,0 +1,7 @@
+{
+  "name": "Multitudinous_Mythics",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/binbinmods/MultitudinousMythics",
+  "description": "Every end of Act Boss now drops Mythic Cards.",
+  "dependencies": ["BepInEx-BepInExPack_AcrossTheObelisk-5.4.23"]
+}
