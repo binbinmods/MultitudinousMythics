@@ -1,6 +1,6 @@
 # Multitudinous Mythics
 
-A very simple mod forces end of act bosses to drop mythic cards.
+A very simple mod forces end of act bosses to drop mythic cards. Also adds options for bosses to drop additional cards (4 instead of 3).
 
 This mod may not work in multiplayer, it is untested.
 

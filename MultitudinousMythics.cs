@@ -64,6 +64,7 @@ namespace MultitudinousMythics
         public static bool IsBossCombat = false;
         public static bool IsEndOfActBossCombatReward()
         {
+            LogDebug($"IsEndOfActBossCombatReward: Current Map Node: {AtOManager.Instance.currentMapNode}");
             return RewardsManager.Instance != null && BossCombatNodes.Contains(AtOManager.Instance.currentMapNode);
         }
 
@@ -96,31 +97,61 @@ namespace MultitudinousMythics
                 ___numCardsReward = 4;
         }
 
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(Functions), nameof(Functions.GetCardByRarity))]
-        public static void GetCardByRarityPostfix(ref string __result, int rarity, CardData _cardData, bool isChallenge = false)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(RewardsManager), "ShowRewards")]
+        public static void ShowRewardsPrefix(ref Dictionary<int, string[]> ___cardsByOrder)
         {
-
             if (!IsEndOfActBossCombatReward())
             {
+                LogDebug("Not End of Act Boss Combat Reward");
                 return;
             }
-            LogDebug($"GetCardByRarityPostfix {rarity} {__result}");
-            string seed = AtOManager.Instance?.currentMapNode ?? "" + AtOManager.Instance.GetGameId() + __result;
-            UnityEngine.Random.InitState(seed.GetDeterministicHashCode());
-            bool upgradeToMythic = UnityEngine.Random.Range(0, 100) < ChanceAtMythic.Value;
-            if (!upgradeToMythic)
+
+            foreach (int key in ___cardsByOrder.Keys)
             {
-                return;
+                if (___cardsByOrder[key] == null || ___cardsByOrder[key].Length == 0)
+                {
+                    continue;
+                }
+                UnityEngine.Random.InitState((AtOManager.Instance.currentMapNode + key + AtOManager.Instance.GetGameId()).GetDeterministicHashCode());
+                int randInt = UnityEngine.Random.Range(0, 100); // Initialize random state for consistent results
+                if (randInt < ChanceAtMythic.Value)
+                {
+                    // Upgrade the card to mythic
+                    Hero hero = AtOManager.Instance.GetHero(key);
+                    string cardId = GetRandomCardByCardRarity(Enums.CardRarity.Mythic, hero);
+
+                    ___cardsByOrder[key][0] = cardId; // Replace the first card with a mythic card
+                }
             }
-
-
-            seed += "1";
-            // string cardName = GetRandomCardByCardRarity(seed);
-            // __result = cardName;
 
         }
+
+
+        // [HarmonyPostfix]
+        // [HarmonyPatch(typeof(Functions), nameof(Functions.GetCardByRarity))]
+        // public static void GetCardByRarityPostfix(ref string __result, int rarity, CardData _cardData, bool isChallenge = false)
+        // {
+
+        //     if (!IsEndOfActBossCombatReward())
+        //     {
+        //         return;
+        //     }
+        //     LogDebug($"GetCardByRarityPostfix {rarity} {__result}");
+        //     string seed = AtOManager.Instance?.currentMapNode ?? "" + AtOManager.Instance.GetGameId() + __result;
+        //     UnityEngine.Random.InitState(seed.GetDeterministicHashCode());
+        //     bool upgradeToMythic = UnityEngine.Random.Range(0, 100) < ChanceAtMythic.Value;
+        //     if (!upgradeToMythic)
+        //     {
+        //         return;
+        //     }
+
+
+        //     seed += "1";
+        //     // string cardName = GetRandomCardByCardRarity(seed);
+        //     // __result = cardName;
+
+        // }
 
         public static string GetRandomCardByCardRarity(Enums.CardRarity cardRarity, Hero hero = null)
         {

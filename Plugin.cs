@@ -63,7 +63,8 @@ namespace MultitudinousMythics
             EnableIncreasedRewards = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "EnableIncreasedRewards"), true, new ConfigDescription("End of Act Bosses drop 4 cards rather than 3"));
             EnableIncreasedRewardsForAllBosses = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "IncreasedRewardsForAllBosses"), true, new ConfigDescription("All Bosses drop 4 cards rather than 3"));
             ChanceAtMythic.Value = Math.Clamp(ChanceAtMythic.Value, 0, 100); // Ensure the value is between 0 and 100
-
+            // ChanceAtMythic.Value = 100;
+            // EnableIncreasedRewards.Value = EnableIncreasedRewardsForAllBosses.Value = true;
             // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} second test (pre-register)");
             // OnlyImmortalPurples.Value = true;
             EssentialsInstalled = Chainloader.PluginInfos.ContainsKey("com.stiffmeds.obeliskialessentials");
@@ -76,7 +77,7 @@ namespace MultitudinousMythics
                 RegisterMod(
                     _name: PluginInfo.PLUGIN_NAME,
                     _author: "binbin",
-                    _description: "Heal Prevention",
+                    _description: "Multitudinout Mythics",
                     _version: PluginInfo.PLUGIN_VERSION,
                     _date: ModDate,
                     _link: @"https://github.com/binbinmods/MultitudinousMythics"
