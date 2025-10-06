@@ -20,45 +20,7 @@ namespace MultitudinousMythics
 
     public class MultitudinousMythicsPatches
     {
-        // [HarmonyReversePatch]
-        // [HarmonyPatch(typeof(MatchManager), "CreateNPC")]
-        // public static void CreateNPCReversePatch(NPCData _npcData,
-        //     string effectTarget = "",
-        //     int _position = -1,
-        //     bool generateFromReload = false,
-        //     string internalId = "",
-        //     CardData _cardActive = null) =>
-        //     //This is intentionally a stub
-        //     throw new NotImplementedException("Reverse patch has not been executed.");
 
-        // [HarmonyPrefix]
-        // [HarmonyPatch(typeof(Character), nameof(Character.HealReceivedFinal))]
-
-        // public static bool HealReceivedFinalPrefix(Character __instance, ref int __result, int heal, bool isIndirect = false, CardData cardAux = null)
-        // {
-        //     if (__instance.IsHero || (PreventNPCHealing.Value && !__instance.IsHero))
-        //     {
-        //         __result = 0;
-        //         return false;
-        //     }
-        //     return true;
-        // }
-        // [HarmonyPrefix]
-        // [HarmonyPatch(typeof(PerkTree), "Show")]
-        // public static void ShowPrefix(ref PerkTree __instance, ref int ___totalAvailablePoints)
-        // {
-
-
-        //     if (PerksPerLevel.Value > 1)
-        //     {
-        //         ___totalAvailablePoints = PerksPerLevel.Value * PlayerManager.Instance.GetHighestCharacterRank();
-        //     }
-        //     if (TotalPerks.Value != -1)
-        //     {
-        //         ___totalAvailablePoints = TotalPerks.Value;
-        //     }
-
-        // }
 
         readonly static List<string> BossCombatNodes = ["sen_33", "aqua_35", "velka_32", "faen_38", "ulmin_56", "sahti_62", "voidlow_25", "voidhigh_13"];
         public static bool IsBossCombat = false;
@@ -187,6 +149,48 @@ namespace MultitudinousMythics
                 }
             }
             return _cardData?.Id.ToLower() ?? "";
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(SteamManager), "SetObeliskScore")]
+        public static bool SetObeliskScorePrefix(ref SteamManager __instance, int score, bool singleplayer = true)
+        {
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(SteamManager), "SetScore")]
+        public static bool SetScorePrefix(ref SteamManager __instance, int score, bool singleplayer = true)
+        {
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(SteamManager), "SetSingularityScore")]
+        public static bool SetSingularityScorePrefix(ref SteamManager __instance, int score, bool singleplayer = true)
+        {
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(SteamManager), "SetObeliskScoreLeaderboard")]
+        public static bool SetObeliskScoreLeaderboardPrefix(ref SteamManager __instance, int score, bool singleplayer = true)
+        {
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(SteamManager), "SetScoreLeaderboard")]
+        public static bool SetScoreLeaderboardPrefix(ref SteamManager __instance, int score, bool singleplayer = true)
+        {
+            return false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(SteamManager), "SetSingularityScoreLeaderboard")]
+        public static bool SetSingularityScoreLeaderboardPrefix(ref SteamManager __instance, int score, bool singleplayer = true)
+        {
+            return false;
         }
 
 

@@ -45,12 +45,14 @@ namespace MultitudinousMythics
         public static ConfigEntry<bool> EnableIncreasedRewards { get; set; }
         public static ConfigEntry<bool> EnableIncreasedRewardsForAllBosses { get; set; }
 
-        public static bool EssentialsInstalled = false;
         public static string debugBase = $"{PluginInfo.PLUGIN_GUID} ";
 
-        internal int ModDate = 20250605; //int.Parse(DateTime.Today.ToString("yyyyMMdd"));
+        internal static int ModDate = 20250605; //int.Parse(DateTime.Today.ToString("yyyyMMdd"));
         private readonly Harmony harmony = new(PluginInfo.PLUGIN_GUID);
         internal static ManualLogSource Log;
+        public static string PluginName;
+        public static string PluginVersion;
+        public static string PluginGUID;
         private void Awake()
         {
 
@@ -63,38 +65,23 @@ namespace MultitudinousMythics
             EnableIncreasedRewards = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "EnableIncreasedRewards"), true, new ConfigDescription("End of Act Bosses drop 4 cards rather than 3"));
             EnableIncreasedRewardsForAllBosses = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "IncreasedRewardsForAllBosses"), true, new ConfigDescription("All Bosses drop 4 cards rather than 3"));
             ChanceAtMythic.Value = Math.Clamp(ChanceAtMythic.Value, 0, 100); // Ensure the value is between 0 and 100
-            // ChanceAtMythic.Value = 100;
-            // EnableIncreasedRewards.Value = EnableIncreasedRewardsForAllBosses.Value = true;
-            // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} second test (pre-register)");
-            // OnlyImmortalPurples.Value = true;
-            EssentialsInstalled = Chainloader.PluginInfos.ContainsKey("com.stiffmeds.obeliskialessentials");
-            // LogDebug($"EssentialsInstalled - {string.Join(", ", Chainloader.PluginInfos.Keys)} - Is Essentials Installed: {EssentialsInstalled}, Is OnlyPurples Enabled: {OnlyImmortalPurples.Value}");
-            // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} Config Values. Spawn: " + GuaranteedSpawn.Value + " Jade: " + OnlySpawnJades.Value + " Percent: " + PercentChanceToSpawn.Value);
+                                                                             // ChanceAtMythic.Value = 100;
+                                                                             // EnableIncreasedRewards.Value = EnableIncreasedRewardsForAllBosses.Value = true;
+                                                                             // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} second test (pre-register)");
+                                                                             // OnlyImmortalPurples.Value = true;
 
-            // Register with Obeliskial Essentials
-            if (EssentialsInstalled)
-            {
-                RegisterMod(
-                    _name: PluginInfo.PLUGIN_NAME,
-                    _author: "binbin",
-                    _description: "Multitudinout Mythics",
-                    _version: PluginInfo.PLUGIN_VERSION,
-                    _date: ModDate,
-                    _link: @"https://github.com/binbinmods/MultitudinousMythics"
-                );
-
-                // List<string> pets = ["betty", "champy", "chompy", "chumpy", "asmody", "cuby", "cubyd"];
-                // foreach (string pet in pets)
-                // {
-                //     AddTextToCardDescription("Immortal", TextLocation.ItemBeforeActivation, pet + "rare");
-                // }
-            }
-
+            PluginName = PluginInfo.PLUGIN_NAME;
+            PluginVersion = PluginInfo.PLUGIN_VERSION;
+            PluginGUID = PluginInfo.PLUGIN_GUID;
             // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} third test (pre patch)");
 
             // apply patches
             if (EnableMod.Value)
+            {
+                EssentialsCompatibility.EssentialsRegister();
                 harmony.PatchAll();
+
+            }
 
             // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} fourth test(post patch)");
 
