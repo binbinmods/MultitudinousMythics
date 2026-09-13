@@ -4,12 +4,12 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using static Obeliskial_Essentials.CardDescriptionNew;
 using System;
-using static MultitudinousMythics.CustomFunctions;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using UnityEngine;
 using System.Collections.Generic;
 using static MultitudinousMythics.Plugin;
+using Cards;
 // using static MatchManager;
 
 // Make sure your namespace is the same everywhere
@@ -52,11 +52,18 @@ namespace MultitudinousMythics
         [HarmonyPatch(typeof(RewardsManager), "SetRewards")]
         public static void SetRewardsPrefix(ref int ___numCardsReward)
         {
-            if (IsEndOfActBossCombatReward() && EnableIncreasedRewards.Value)
-                ___numCardsReward = 4;
+            try
+            {
+                if (IsEndOfActBossCombatReward() && EnableIncreasedRewards.Value)
+                    ___numCardsReward = 4;
 
-            if (IsBossCombatReward() && EnableIncreasedRewardsForAllBosses.Value)
-                ___numCardsReward = 4;
+                if (IsBossCombatReward() && EnableIncreasedRewardsForAllBosses.Value)
+                    ___numCardsReward = 4;
+            }
+            catch (Exception e)
+            {
+                LogError($"SetRewardsPrefix: Error {e}");
+            }
         }
 
         [HarmonyPrefix]
@@ -80,7 +87,7 @@ namespace MultitudinousMythics
                 if (randInt < ChanceAtMythic.Value)
                 {
                     // Upgrade the card to mythic
-                    Hero hero = AtOManager.Instance.GetHero(key);
+                    Hero hero = AtOManager.Instance.team.GetHero(key);
                     string cardId = GetRandomCardByCardRarity(Enums.CardRarity.Mythic, hero);
 
                     ___cardsByOrder[key][0] = cardId; // Replace the first card with a mythic card
@@ -117,80 +124,48 @@ namespace MultitudinousMythics
 
         public static string GetRandomCardByCardRarity(Enums.CardRarity cardRarity, Hero hero = null)
         {
-            // LogDebug($"GetRandomMythic {seed}");
-            // UnityEngine.Random.InitState(seed.GetDeterministicHashCode());
-            Hero heroToCheck = hero ?? MatchManager.Instance?.GetHeroHeroActive();
-            if (heroToCheck == null)
+            try
             {
-                LogError("GetRandomCardByCardRarity: Hero is null, cannot determine card class.");
+
+
+                // LogDebug($"GetRandomMythic {seed}");
+                // UnityEngine.Random.InitState(seed.GetDeterministicHashCode());
+                Hero heroToCheck = hero ?? MatchManager.Instance?.GetHeroHeroActive();
+                if (heroToCheck == null)
+                {
+                    LogError("GetRandomCardByCardRarity: Hero is null, cannot determine card class.");
+                    return "";
+                }
+                Enums.CardClass result1 = Enums.CardClass.None;
+                Enum.TryParse<Enums.CardClass>(Enum.GetName(typeof(Enums.HeroClass), (object)heroToCheck.HeroData.HeroClass), out result1);
+                Enums.CardClass result2 = Enums.CardClass.None;
+                Enum.TryParse<Enums.CardClass>(Enum.GetName(typeof(Enums.HeroClass), (object)heroToCheck.HeroData.HeroSubClass.HeroClassSecondary), out result2);
+                // // int length = this.numCardsReward;
+                // // if (this.numCardsReward == 3 && result2 != Enums.CardClass.None)
+                // //     length = 4;
+                // string[] arr = new string[length];
+
+                List<string> stringList1 = Globals.Instance.CardListNotUpgradedByClass[result1];
+                List<string> stringList2 = result2 == Enums.CardClass.None ? new List<string>() : Globals.Instance.CardListNotUpgradedByClass[result2];
+                bool flag3 = false;
+                CardRealtimeData _cardData = null;
+                while (!flag3)
+                {
+                    bool flag2 = false;
+                    _cardData = Globals.Instance.GetCardData(result2 == Enums.CardClass.None ? stringList1[UnityEngine.Random.Range(0, stringList1.Count)] : stringList2[UnityEngine.Random.Range(0, stringList2.Count)], false);
+                    if (!flag2)
+                    {
+                        if (_cardData.CardRarity == cardRarity)
+                            flag3 = true;
+                    }
+                }
+                return _cardData?.Id.ToLower() ?? "";
+            }
+            catch (Exception e)
+            {
+                LogError($"GetRandomCardByCardRarity: Error {e}");
                 return "";
             }
-            Enums.CardClass result1 = Enums.CardClass.None;
-            Enum.TryParse<Enums.CardClass>(Enum.GetName(typeof(Enums.HeroClass), (object)heroToCheck.HeroData.HeroClass), out result1);
-            Enums.CardClass result2 = Enums.CardClass.None;
-            Enum.TryParse<Enums.CardClass>(Enum.GetName(typeof(Enums.HeroClass), (object)heroToCheck.HeroData.HeroSubClass.HeroClassSecondary), out result2);
-            // // int length = this.numCardsReward;
-            // // if (this.numCardsReward == 3 && result2 != Enums.CardClass.None)
-            // //     length = 4;
-            // string[] arr = new string[length];
-
-            List<string> stringList1 = Globals.Instance.CardListNotUpgradedByClass[result1];
-            List<string> stringList2 = result2 == Enums.CardClass.None ? new List<string>() : Globals.Instance.CardListNotUpgradedByClass[result2];
-            bool flag3 = false;
-            CardData _cardData = null;
-            while (!flag3)
-            {
-                bool flag2 = false;
-                _cardData = Globals.Instance.GetCardData(result2 == Enums.CardClass.None ? stringList1[UnityEngine.Random.Range(0, stringList1.Count)] : stringList2[UnityEngine.Random.Range(0, stringList2.Count)], false);
-                if (!flag2)
-                {
-                    if (_cardData.CardRarity == cardRarity)
-                        flag3 = true;
-                }
-            }
-            return _cardData?.Id.ToLower() ?? "";
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(SteamManager), "SetObeliskScore")]
-        public static bool SetObeliskScorePrefix(ref SteamManager __instance, int score, bool singleplayer = true)
-        {
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(SteamManager), "SetScore")]
-        public static bool SetScorePrefix(ref SteamManager __instance, int score, bool singleplayer = true)
-        {
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(SteamManager), "SetSingularityScore")]
-        public static bool SetSingularityScorePrefix(ref SteamManager __instance, int score, bool singleplayer = true)
-        {
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(SteamManager), "SetObeliskScoreLeaderboard")]
-        public static bool SetObeliskScoreLeaderboardPrefix(ref SteamManager __instance, int score, bool singleplayer = true)
-        {
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(SteamManager), "SetScoreLeaderboard")]
-        public static bool SetScoreLeaderboardPrefix(ref SteamManager __instance, int score, bool singleplayer = true)
-        {
-            return false;
-        }
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(SteamManager), "SetSingularityScoreLeaderboard")]
-        public static bool SetSingularityScoreLeaderboardPrefix(ref SteamManager __instance, int score, bool singleplayer = true)
-        {
-            return false;
         }
 
 

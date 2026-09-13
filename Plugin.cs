@@ -4,18 +4,18 @@ using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Configuration;
 using HarmonyLib;
-using static Obeliskial_Essentials.Essentials;
-using static Obeliskial_Essentials.CardDescriptionNew;
 using System;
-using System.Runtime.CompilerServices;
-using BepInEx.Bootstrap;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Collections;
 
 
-// The Plugin csharp file is used to 
+// The Plugin csharp file is used to specify some general info about your plugin. and set up things for 
 
 
 // Make sure all your files have the same namespace and this namespace matches the RootNamespace in the .csproj file
+// All files that are in the same namespace are compiled together and can "see" each other more easily.
+
 namespace MultitudinousMythics
 {
     // These are used to create the actual plugin. If you don't need Obeliskial Essentials for your mod, 
@@ -25,7 +25,6 @@ namespace MultitudinousMythics
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInDependency("com.stiffmeds.obeliskialessentials", BepInDependency.DependencyFlags.SoftDependency)] // this is the name of the .dll in the !libs folder.
     [BepInProcess("AcrossTheObelisk.exe")] //Don't change this
-    // [BepInIncompatibility("com.stiffmeds.obeliskialessentials")]
 
     // If PluginInfo isn't working, you are either:
     // 1. Using BepInEx v6
@@ -37,71 +36,86 @@ namespace MultitudinousMythics
     {
 
         // If desired, you can create configs for users by creating a ConfigEntry object here, 
-        // and then use config = Config.Bind() to set the title, default value, and description of the config.
+        // Configs allows users to specify certain things about the mod. 
+        // The most common would be a flag to enable/disable portions of the mod or the entire mod.
+
+        // You can use: config = Config.Bind() to set the title, default value, and description of the config.
         // It automatically creates the appropriate configs.
+
+
         public static ConfigEntry<bool> EnableMod { get; set; }
         public static ConfigEntry<bool> EnableDebugging { get; set; }
         public static ConfigEntry<int> ChanceAtMythic { get; set; }
         public static ConfigEntry<bool> EnableIncreasedRewards { get; set; }
         public static ConfigEntry<bool> EnableIncreasedRewardsForAllBosses { get; set; }
 
-        public static string debugBase = $"{PluginInfo.PLUGIN_GUID} ";
-
-        internal static int ModDate = 20250605; //int.Parse(DateTime.Today.ToString("yyyyMMdd"));
-        private readonly Harmony harmony = new(PluginInfo.PLUGIN_GUID);
-        internal static ManualLogSource Log;
         public static string PluginName;
         public static string PluginVersion;
         public static string PluginGUID;
+
+        internal static int ModDate = int.Parse(DateTime.Today.ToString("yyyyMMdd"));
+        private readonly Harmony harmony = new(PluginInfo.PLUGIN_GUID);
+        internal static ManualLogSource Log;
+
+
+        public static string debugBase = $"{PluginInfo.PLUGIN_GUID} ";
+
         private void Awake()
         {
 
+            // The Logger will allow you to print things to the LogOutput (found in the BepInEx directory)
             Log = Logger;
-            Log.LogInfo($"{PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} has loaded!");
 
-            EnableMod = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "EnableMod"), true, new ConfigDescription("Enables the mod. If false, the mod will not work then next time you load the game."));
-            EnableDebugging = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "EnableDebugging"), true, new ConfigDescription("Enables the debugging"));
-            ChanceAtMythic = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "ChanceAtMythic"), 50, new ConfigDescription("The percent chance that the end of act boss will drop a mythic card. 0-100."));
-            EnableIncreasedRewards = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "EnableIncreasedRewards"), true, new ConfigDescription("End of Act Bosses drop 4 cards rather than 3"));
-            EnableIncreasedRewardsForAllBosses = Config.Bind(new ConfigDefinition(PluginInfo.PLUGIN_NAME, "IncreasedRewardsForAllBosses"), true, new ConfigDescription("All Bosses drop 4 cards rather than 3"));
-            ChanceAtMythic.Value = Math.Clamp(ChanceAtMythic.Value, 0, 100); // Ensure the value is between 0 and 100
-                                                                             // ChanceAtMythic.Value = 100;
-                                                                             // EnableIncreasedRewards.Value = EnableIncreasedRewardsForAllBosses.Value = true;
-                                                                             // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} second test (pre-register)");
-                                                                             // OnlyImmortalPurples.Value = true;
+            // Sets the title, default values, and descriptions
+            string modName = "MultitudinousMythics";
+            EnableMod = Config.Bind(new ConfigDefinition(modName, "EnableMod"), true, new ConfigDescription("Enables the mod. If false, the mod will not work then next time you load the game."));
+            EnableDebugging = Config.Bind(new ConfigDefinition(modName, "EnableDebugging"), false, new ConfigDescription("Enables the debugging"));
+            ChanceAtMythic = Config.Bind(new ConfigDefinition(modName, "ChanceAtMythic"), 50, new ConfigDescription("The percent chance that the end of act boss will drop a mythic card. 0-100."));
+            EnableIncreasedRewards = Config.Bind(new ConfigDefinition(modName, "EnableIncreasedRewards"), true, new ConfigDescription("End of Act Bosses drop 4 cards rather than 3"));
+            EnableIncreasedRewardsForAllBosses = Config.Bind(new ConfigDefinition(modName, "IncreasedRewardsForAllBosses"), true, new ConfigDescription("All Bosses drop 4 cards rather than 3"));
+            ChanceAtMythic.Value = Math.Clamp(ChanceAtMythic.Value, 0, 100);
+
+            EnableMod.SettingChanged += (sender, e) => { LogDebug($"EnableMod setting changed to {EnableMod.Value}"); };
+            EnableDebugging.SettingChanged += (sender, e) => { LogDebug($"EnableDebugging setting changed to {EnableDebugging.Value}"); };
 
             PluginName = PluginInfo.PLUGIN_NAME;
             PluginVersion = PluginInfo.PLUGIN_VERSION;
             PluginGUID = PluginInfo.PLUGIN_GUID;
-            // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} third test (pre patch)");
-
-            // apply patches
             if (EnableMod.Value)
             {
-                EssentialsCompatibility.EssentialsRegister();
+                if (EssentialsCompatibility.Enabled)
+                    EssentialsCompatibility.EssentialsRegister();
+                else
+                    LogInfo($"{PluginGUID} {PluginVersion} has loaded!");
                 harmony.PatchAll();
-
             }
-
-            // Log.LogInfo($"{PluginInfo.PLUGIN_GUID} fourth test(post patch)");
-
         }
 
-        internal static void LogDebug(string msg)
+
+        // These are some functions to make debugging a tiny bit easier.
+        internal static void LogDebug(string msg, [CallerMemberName] string caller = "")
         {
             if (EnableDebugging.Value)
             {
-                Log.LogDebug(debugBase + msg);
+                Log.LogDebug($"{debugBase}- {caller} - {msg}");
             }
-
         }
         internal static void LogInfo(string msg)
         {
             Log.LogInfo(debugBase + msg);
         }
-        internal static void LogError(string msg)
+        internal static void LogError(string msg, [CallerMemberName] string caller = "")
         {
-            Log.LogError(debugBase + msg);
+            Log.LogError($"{debugBase}- {caller} - {msg}");
         }
+
+        public static IEnumerator RunAfter(IEnumerator original, Action action)
+        {
+            while (original.MoveNext())
+                yield return original.Current;
+            action();
+        }
+
+
     }
 }

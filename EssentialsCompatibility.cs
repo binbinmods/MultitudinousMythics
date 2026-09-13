@@ -23,11 +23,11 @@ public static class EssentialsCompatibility
         RegisterMod(
             _name: PluginName,
             _author: "binbin",
-            _description: "Town Map",
+            _description: "Multitudinous Mythics",
             _version: PluginVersion,
             _date: ModDate,
-            _link: @"https://github.com/binbinmods/TownMap"
+            _link: @"https://github.com/binbinmods/MultitudinousMythics"
         );
-        LogInfo($"{PluginGUID} {PluginVersion} has loaded with Essentials!");
+        LogInfo($"{PluginVersion} has loaded with Essentials!");
     }
 }
